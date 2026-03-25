@@ -1,0 +1,10 @@
+# Claude Code 本地配置（含个人 Token，不提交）
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp

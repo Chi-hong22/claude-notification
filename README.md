@@ -14,7 +14,7 @@
 
 ```bash
 # 1. 在 Claude Code 输入框中添加市场
-/plugin marketplace add https://github.com/Oreo992/claude-notification
+/plugin marketplace add https://github.com/Chi-hong22/claude-notification
 
 # 2. 安装插件（根据你的系统选择）
 /plugin install windows@claude-notification    # Windows
