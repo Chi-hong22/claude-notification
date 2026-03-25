@@ -1,33 +1,33 @@
 ---
 name: notification-config
 description: |
-  This skill should be used when the user asks to "configure notifications", "set up Bark",
-  "configure Bark push", "configure WeChat notifications", "make notifications persistent", "always notify",
-  or mentions "Bark", "WeChat", "notification settings", "push notifications".
-  Also use when AI needs to proactively send notifications after completing important tasks.
+  Use this skill to configure or send push notifications in Claude Code on Windows.
+  Trigger when the user says things like: "configure notifications", "set up Bark", "set up WeChat push",
+  "配置通知", "设置推送", "配置微信通知", "配置 Bark", "任务完成后通知我", "帮我开启通知",
+  "make notifications persistent", "always notify", or mentions "Bark", "WeChat", "xtuis", "notification settings".
+  Also trigger proactively when AI completes a long-running task and should notify the user.
 ---
 
-# Claude Notification Configuration and Usage
+# Claude Notification Configuration and Usage (Windows)
 
-This plugin supports configuration and proactive notification sending.
+This skill handles two things: configuring notification channels, and proactively sending notifications.
 
 ## Configuration File
 
 **Location**: `.claude/claude-notification.local.md` (project root)
 
-### Configuration Options
-
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `bark_url` | string | empty | Bark push URL, e.g., `https://api.day.app/your-key` |
-| `wechat_token` | string | empty | WeChat Token, get from https://xtuis.cn/ |
-| `wechat_hook_enabled` | boolean | true | Enable WeChat hook auto-trigger |
-| `bark_hook_enabled` | boolean | true | Enable Bark hook auto-trigger |
+| `wechat_token` | string | empty | WeChat Token from https://xtuis.cn/ |
+| `wechat_hook_enabled` | boolean | false | Enable WeChat hook auto-trigger |
+| `bark_hook_enabled` | boolean | false | Enable Bark hook auto-trigger |
 | `system_notification_enabled` | boolean | true | Enable system notifications |
-| `always_notify` | boolean | false | Set to true to always notify, even when terminal is in foreground |
+| `notify_always` | boolean | false | Notify even when terminal is in foreground |
+| `audio_enabled` | boolean | true | Play audio on PermissionRequest/Stop hooks |
+| `audio_always` | boolean | false | Play audio even when terminal is in foreground |
 
-### Configuration Template
-
+Template:
 ```markdown
 ---
 bark_url: ""
@@ -35,151 +35,107 @@ wechat_token: ""
 wechat_hook_enabled: false
 bark_hook_enabled: false
 system_notification_enabled: true
-always_notify: false
+notify_always: false
+audio_enabled: true
+audio_always: false
 ---
 ```
 
-## Proactive Notification Sending
+## Available Scripts
 
-AI can call notification scripts at appropriate times.
+Located in `scripts/` directory of this skill:
 
-### Available Scripts
+- `scripts/notify.ps1` — Windows system notification
+- `scripts/bark.ps1` — Bark push (rich parameters)
+- `scripts/wechat.ps1` — WeChat push
+- `scripts/play-audio.ps1` — Audio notification (WAV)
+- `audio/warning.wav` — Warning sound (PermissionRequest hook)
+- `audio/complete.wav` — Completion sound (Stop hook)
 
-Scripts are located in `scripts/` directory of this skill:
-
-- **`scripts/notify.ps1`** - System notification script
-- **`scripts/bark.ps1`** - Bark push script with full parameters
-- **`scripts/wechat.ps1`** - WeChat push script
-- **`scripts/play-audio.ps1`** - Audio notification script (plays WAV files)
-- **`audio/warning.wav`** - Warning sound (played on PermissionRequest)
-- **`audio/complete.wav`** - Completion sound (played on Stop)
+## Script Usage
 
 ### System Notification
-
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/notify.ps1" -Title "Title" -Message "Content"
 ```
 
 ### Bark Push
-
-Use `scripts/bark.ps1` for rich push notifications:
-
 ```powershell
-# View help
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/bark.ps1" -Help
-
-# Simple push
+# Simple
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/bark.ps1" -Url "URL" -Message "Task completed"
 
 # With title
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/bark.ps1" -Url "URL" -Title "Claude" -Message "Code review done"
 
-# Urgent (ring for 30s)
+# Urgent (ring 30s)
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/bark.ps1" -Url "URL" -Message "Urgent!" -Call
 
-# Grouped message
+# Grouped
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/bark.ps1" -Url "URL" -Message "Build done" -Group "build"
 ```
 
-### Bark Parameters
-
-| Parameter | Description |
-|-----------|-------------|
-| `-Url` | Bark server URL (required) |
-| `-Message` | Push content (required) |
-| `-Title` | Push title |
-| `-Group` | Message group name |
-| `-Sound` | Ringtone (alarm, bell, etc.) |
-| `-Call` | Ring for 30 seconds |
-| `-Level` | Level: active, timeSensitive, passive |
-| `-Icon` | Custom icon URL |
-| `-Badge` | Badge number |
-| `-Copy` | Content to copy on tap |
-| `-AutoCopy` | Auto copy on receive |
-| `-Archive` | Save to history |
-| `-RedirectUrl` | URL to open on tap |
+Bark parameters: `-Url` (required), `-Message` (required), `-Title`, `-Group`, `-Sound`, `-Call`, `-Level`, `-Icon`, `-Badge`, `-Copy`, `-AutoCopy`, `-Archive`, `-RedirectUrl`
 
 ### WeChat Push
-
-Use `scripts/wechat.ps1` for WeChat notifications:
-
 ```powershell
-# View help
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/wechat.ps1" -Help
-
-# Simple push
+# Simple
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/wechat.ps1" -Token "TOKEN" -Text "Task completed"
 
 # With description
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/wechat.ps1" -Token "TOKEN" -Text "Claude Code" -Desp "Code review done"
-
-# Detailed notification
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/wechat.ps1" -Token "TOKEN" -Text "Build completed" -Desp "Project build successful, took 5 minutes"
 ```
 
-### WeChat Parameters
+WeChat parameters: `-Token` (required), `-Text` (required), `-Desp` (optional)
 
-| Parameter | Description |
-|-----------|-------------|
-| `-Token` | Token (required), get from https://xtuis.cn/ |
-| `-Text` | Notification title (required) |
-| `-Desp` | Notification content/description (optional) |
-
-### Audio Notification
-
-Plays a local WAV file. Used automatically by hooks:
-
+### Audio
 ```powershell
-# Play warning sound (PermissionRequest hook)
-powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.ps1" -AudioFile "${CLAUDE_PLUGIN_ROOT}/audio/warning.wav"
-
-# Play completion sound (Stop hook)
 powershell -NoProfile -ExecutionPolicy Bypass -File "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.ps1" -AudioFile "${CLAUDE_PLUGIN_ROOT}/audio/complete.wav"
 ```
 
-## Recommended Usage Scenarios
+---
 
-Send notifications proactively in these scenarios:
+## Checking and Upgrading Configuration
 
-1. **Long task completion** - Build, test, deploy finished
-2. **User confirmation needed** - Use `-Call` for urgent
-3. **Important milestones** - Code review done, PR created
-4. **Error alerts** - Build failed, tests not passing
+When the user runs `/notification-config` or asks to configure notifications, first check if the config file is up to date.
 
-## Operation Steps
+**Current expected fields** (as defined in the Configuration File section above):
+`bark_url`, `wechat_token`, `wechat_hook_enabled`, `bark_hook_enabled`, `system_notification_enabled`, `notify_always`, `audio_enabled`, `audio_always`
 
-### Configure Bark
+Steps:
 
-**IMPORTANT: Always check existing configuration first**
+1. Read `.claude/claude-notification.local.md`. If it doesn't exist, skip to the relevant Configure section.
+2. Compare the fields present in the file against the expected fields above.
+   - Identify any **missing fields** (fields in the expected set but not in the file).
+   - Identify any **obsolete fields** (fields in the file but not in the expected set, e.g., `bark_only`, `timeout`).
+3. If there are differences, tell the user what changed and ask: "配置文件有以下字段需要更新，是否自动补全？"
+   - List the missing fields and their default values.
+   - List any obsolete fields that will be removed.
+4. If the user agrees, update the file:
+   - For missing `bark_url` or `wechat_token`: add with empty string `""` — do NOT ask the user to fill them in here.
+   - For missing `_enabled` or `_always` fields: ask the user whether to enable each one (yes/no), since these control behavior.
+   - Remove obsolete fields (e.g., `bark_only: true` → set `system_notification_enabled: false` before removing; `always_notify` → rename to `notify_always`).
+   - Preserve all existing values unchanged.
+5. If no differences, tell the user the config is already up to date.
 
-1. **Check if configuration already exists:**
-   - Use Read tool to check `.claude/claude-notification.local.md`
-   - If file exists and contains `bark_url`:
-     - Display current configuration to user
-     - Ask if they want to modify it (use AskUserQuestion)
-     - If no, skip to step 4 to check CLAUDE.md
-     - If yes, continue to step 2
-   - If file doesn't exist or bark_url is empty, continue to step 2
+---
 
-2. **Ask user for Bark URL** (only if needed)
-   - Ask: "请提供您的 Bark 推送 URL（例如：https://api.day.app/your-key/）"
+## Configuring Bark
 
-3. **Create or update configuration file:**
-   - Use Write tool to create/update `.claude/claude-notification.local.md`
-   - **IMPORTANT**: Set `bark_hook_enabled: true` only if the user provided a valid bark_url; otherwise set it to `false`
-   - **IMPORTANT**: Keep `wechat_hook_enabled` value unchanged if it already exists in the file; if creating new, set to `false` unless wechat_token is also being configured now
+The goal is to save the user's Bark URL so hooks and proactive notifications work automatically.
 
-4. **Check if CLAUDE.md needs notification configuration:**
-   - Use Read tool to check if `.claude/CLAUDE.md` exists
-   - If exists, check if it already contains "通知功能配置" or "notification"
-   - If already configured, inform user and skip to step 6
-   - If not configured, continue to step 5
-
-5. **Ask about adding to CLAUDE.md** (only if not already configured):
-   - Use AskUserQuestion: "是否要将通知功能添加到项目的 CLAUDE.md 中？这样 AI 就能在完成重要任务时主动发送通知。"
-   - Options: "是，添加到 CLAUDE.md" / "否，暂时不需要"
-   - If yes: Create or append to `.claude/CLAUDE.md` with the following content.
-   - **IMPORTANT**: Replace `{{PLUGIN_PATH}}` with the actual expanded value of `${CLAUDE_PLUGIN_ROOT}` when writing to CLAUDE.md.
+1. Read `.claude/claude-notification.local.md` to check if `bark_url` is already set.
+   - If it is, show the current value and ask if they want to change it. If not, skip to step 4.
+2. If the user hasn't already provided a Bark URL in their message, ask: "请提供您的 Bark 推送 URL（例如：https://api.day.app/your-key/）"
+   - If they already provided it, use that value directly.
+3. Write/update `.claude/claude-notification.local.md`:
+   - Set `bark_url` to the provided value and `bark_hook_enabled: true`
+   - Preserve existing `wechat_token` and `wechat_hook_enabled` values if the file already exists
+4. Check `.claude/CLAUDE.md`:
+   - If the file doesn't exist, you can still offer to create it.
+   - If it exists but doesn't contain "通知功能配置" or "notification", ask:
+   "是否要将通知功能添加到项目的 CLAUDE.md 中？这样 AI 就能在完成重要任务时主动发送通知。"
+   Options: "是，添加到 CLAUDE.md" / "否，暂时不需要"
+   - If yes, append the Bark notification block below. For `{{PLUGIN_PATH}}`: use the path from `${CLAUDE_PLUGIN_ROOT}` if available, otherwise look for the plugin path in existing hook commands in `.claude/settings.json` or `.claude/settings.local.json`.
 
 ```markdown
 ## 通知功能配置
@@ -215,45 +171,60 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "{{PLUGIN_PATH}}/skills/noti
 * 相关任务使用 `-Group` 参数分组
 ```
 
-6. **Remind user about restart:**
-   - Only if configuration was created or modified: **"配置完成后需要重启 Claude Code 才能生效"**
+5. If config was created or modified, remind: "配置完成后需要重启 Claude Code 才能生效"
 
-### Configure WeChat
+---
 
-**IMPORTANT: Always check existing configuration first**
+## Configuring System Notifications
 
-1. **Check if configuration already exists:**
-   - Use Read tool to check `.claude/claude-notification.local.md`
-   - If file exists and contains `wechat_token`:
-     - Display current configuration to user
-     - Ask if they want to modify it (use AskUserQuestion)
-     - If no, skip to step 4 to check CLAUDE.md
-     - If yes, continue to step 2
-   - If file doesn't exist or wechat_token is empty, continue to step 2
+System notifications are desktop popups (Windows Toast). No token or URL needed — just toggle on/off and front/background behavior.
 
-2. **Guide user to get WeChat Token** (only if needed)
-   - Tell user: "请按照以下步骤获取微信通知 Token："
-   - Step 1: "访问 https://xtuis.cn/"
-   - Step 2: "微信扫码关注公众号"
-   - Step 3: "获取你的专属 Token 并提供给我"
-   - Ask: "请提供您的 Token"
+1. Read `.claude/claude-notification.local.md` to get current values of `system_notification_enabled` and `notify_always`.
+   - Show the current state to the user.
+2. Ask what they want to change. Common requests:
+   - "关掉系统弹窗" → set `system_notification_enabled: false`
+   - "只用 Bark/微信，不要系统通知" → set `system_notification_enabled: false`
+   - "终端在前台时也弹窗" → set `notify_always: true`
+   - "恢复默认" → set `system_notification_enabled: true`, `notify_always: false`
+3. Write/update `.claude/claude-notification.local.md` with the new values. Preserve all other fields.
+4. Remind: "配置完成后需要重启 Claude Code 才能生效"
 
-3. **Create or update configuration file:**
-   - Use Write tool to create/update `.claude/claude-notification.local.md`
-   - **IMPORTANT**: Set `wechat_hook_enabled: true` only if the user provided a valid wechat_token; otherwise set it to `false`
-   - **IMPORTANT**: Keep `bark_hook_enabled` value unchanged if it already exists in the file; if creating new, set to `false` unless bark_url is also being configured now
+---
 
-4. **Check if CLAUDE.md needs notification configuration:**
-   - Use Read tool to check if `.claude/CLAUDE.md` exists
-   - If exists, check if it already contains "通知功能配置" or "notification"
-   - If already configured, inform user and skip to step 6
-   - If not configured, continue to step 5
+## Configuring Audio Notifications
 
-5. **Ask about adding to CLAUDE.md** (only if not already configured):
-   - Use AskUserQuestion: "是否要将微信通知功能添加到项目的 CLAUDE.md 中？这样 AI 就能在完成重要任务时主动发送通知。"
-   - Options: "是，添加到 CLAUDE.md" / "否，暂时不需要"
-   - If yes: Create or append to `.claude/CLAUDE.md` with the following content.
-   - **IMPORTANT**: Replace `{{PLUGIN_PATH}}` with the actual expanded value of `${CLAUDE_PLUGIN_ROOT}` when writing to CLAUDE.md.
+Audio notifications play WAV files on hook events (PermissionRequest → warning.wav, Stop → complete.wav). Same logic as system notifications — just toggle on/off and front/background behavior.
+
+1. Read `.claude/claude-notification.local.md` to get current values of `audio_enabled` and `audio_always`.
+   - Show the current state to the user.
+2. Ask what they want to change. Common requests:
+   - "关掉声音" / "静音" → set `audio_enabled: false`
+   - "终端在前台时也播放声音" → set `audio_always: true`
+   - "恢复默认" → set `audio_enabled: true`, `audio_always: false`
+3. Write/update `.claude/claude-notification.local.md` with the new values. Preserve all other fields.
+4. Remind: "配置完成后需要重启 Claude Code 才能生效"
+
+---
+
+## Configuring WeChat
+
+Same flow as Bark, but for WeChat.
+
+1. Read `.claude/claude-notification.local.md` to check if `wechat_token` is already set.
+   - If it is, show the current value and ask if they want to change it. If not, skip to step 4.
+2. If the user hasn't already provided a token, guide them to get one:
+   - Visit https://xtuis.cn/
+   - Scan QR code with WeChat to follow the account
+   - Copy the token and provide it
+3. Write/update `.claude/claude-notification.local.md`:
+   - Set `wechat_token` to the provided value and `wechat_hook_enabled: true`
+   - Preserve existing `bark_url` and `bark_hook_enabled` values if the file already exists
+4. Check `.claude/CLAUDE.md`:
+   - If the file doesn't exist, you can still offer to create it.
+   - If it exists but doesn't contain "通知功能配置" or "notification", ask:
+   "是否要将微信通知功能添加到项目的 CLAUDE.md 中？这样 AI 就能在完成重要任务时主动发送通知。"
+   Options: "是，添加到 CLAUDE.md" / "否，暂时不需要"
+   - If yes, append the WeChat notification block below. For `{{PLUGIN_PATH}}`: use the path from `${CLAUDE_PLUGIN_ROOT}` if available, otherwise look for the plugin path in existing hook commands in `.claude/settings.json` or `.claude/settings.local.json`.
 
 ```markdown
 ## 通知功能配置
@@ -288,14 +259,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "{{PLUGIN_PATH}}/skills/noti
 * 使用 `-Text` 参数设置标题，`-Desp` 参数设置详细内容
 ```
 
-6. **Remind user about restart:**
-   - Only if configuration was created or modified: **"配置完成后需要重启 Claude Code 才能生效"**
+5. If config was created or modified, remind: "配置完成后需要重启 Claude Code 才能生效"
 
-### Send Notification Proactively
+---
 
-When user requests notification or after completing important tasks:
+## Sending Notifications Proactively
 
-1. Read `bark_url` and `wechat_token` from `.claude/claude-notification.local.md`
-2. If bark_url exists, use Bash tool to call bark.ps1 with the exact command format from CLAUDE.md (or use the format shown above if CLAUDE.md doesn't have it)
-3. If wechat_token exists, use Bash tool to call wechat.ps1 with the exact command format from CLAUDE.md (or use the format shown above if CLAUDE.md doesn't have it)
-4. Choose appropriate parameters based on scenario (use -Call for urgent Bark notifications, use -Desp for detailed WeChat messages)
+When the user asks to send a notification, or after completing a significant task:
+
+1. Read `.claude/claude-notification.local.md` to get `bark_url`, `wechat_token`, and `notify_always`.
+   - If the file doesn't exist or both channel values are empty, tell the user no notification channel is configured and offer to set one up.
+   - If `notify_always: false` (the default), only send notifications when the terminal is likely in the background (e.g., after a long task). Skip if the user is actively interacting.
+2. If `bark_url` is set, call `bark.ps1` using the command format from CLAUDE.md (or the format above).
+3. If `wechat_token` is set, call `wechat.ps1` using the command format from CLAUDE.md (or the format above).
+4. Pick parameters that fit the situation: use `-Call` for urgent Bark alerts, use `-Desp` for detailed WeChat messages.
+
+Good times to send proactively (without being asked):
+- Long build/test/deploy finished
+- Need user decision on something important
+- Code review or PR creation completed
+- Build failed or tests not passing

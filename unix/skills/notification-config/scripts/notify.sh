@@ -8,27 +8,22 @@ DIR="${3:-}"
 # 默认配置
 BARK_URL=""
 SYSTEM_NOTIFICATION_ENABLED="true"
-ALWAYS_NOTIFY="false"
+NOTIFY_ALWAYS="false"
 
 # 读取配置文件
 CONFIG_FILE="$DIR/.claude/claude-notification.local.md"
 if [[ -f "$CONFIG_FILE" ]]; then
-    # 提取 YAML frontmatter
     FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$CONFIG_FILE")
 
-    # 解析配置项
     if [[ -n "$FRONTMATTER" ]]; then
-        # 提取 bark_url
         BARK_URL=$(echo "$FRONTMATTER" | grep '^bark_url:' | sed 's/bark_url: *//' | sed 's/^"\(.*\)"$/\1/' | sed "s/^'\(.*\)'$/\1/")
-        # 提取 system_notification_enabled
         SYSTEM_NOTIFICATION_ENABLED_VAL=$(echo "$FRONTMATTER" | grep '^system_notification_enabled:' | sed 's/system_notification_enabled: *//')
         if [[ "$SYSTEM_NOTIFICATION_ENABLED_VAL" == "false" ]]; then
             SYSTEM_NOTIFICATION_ENABLED="false"
         fi
-        # 提取 always_notify
-        ALWAYS_NOTIFY_VAL=$(echo "$FRONTMATTER" | grep '^always_notify:' | sed 's/always_notify: *//')
-        if [[ "$ALWAYS_NOTIFY_VAL" == "true" ]]; then
-            ALWAYS_NOTIFY="true"
+        NOTIFY_ALWAYS_VAL=$(echo "$FRONTMATTER" | grep '^notify_always:' | sed 's/notify_always: *//')
+        if [[ "$NOTIFY_ALWAYS_VAL" == "true" ]]; then
+            NOTIFY_ALWAYS="true"
         fi
     fi
 fi
@@ -39,7 +34,7 @@ send_notification() {
     local terminal_name=""
 
     # 如果配置了 always_notify，直接发送通知
-    if [[ "$ALWAYS_NOTIFY" == "true" ]]; then
+    if [[ "$NOTIFY_ALWAYS" == "true" ]]; then
         should_notify=true
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS - 检测前台应用

@@ -17,7 +17,7 @@
           },
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.sh\" \"${CLAUDE_PLUGIN_ROOT}/audio/warning.wav\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.sh\" \"${CLAUDE_PLUGIN_ROOT}/audio/warning.wav\" \"${CLAUDE_PROJECT_DIR}\"",
             "timeout": 10
           }
         ]
@@ -38,7 +38,7 @@
           },
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.sh\" \"${CLAUDE_PLUGIN_ROOT}/audio/complete.wav\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.sh\" \"${CLAUDE_PLUGIN_ROOT}/audio/complete.wav\" \"${CLAUDE_PROJECT_DIR}\"",
             "timeout": 10
           }
         ]

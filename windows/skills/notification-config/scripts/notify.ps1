@@ -12,7 +12,7 @@ if (-not $Dir -or $Dir -eq '${CLAUDE_PROJECT_DIR}' -or $Dir -eq '$CLAUDE_PROJECT
 $configFile = Join-Path $Dir ".claude/claude-notification.local.md"
 $barkUrl = ""
 $systemNotificationEnabled = $true
-$alwaysNotify = $false
+$notifyAlways = $false
 
 if (Test-Path $configFile) {
     $content = Get-Content $configFile -Raw
@@ -24,8 +24,8 @@ if (Test-Path $configFile) {
         if ($frontmatter -match 'system_notification_enabled:\s*(true|false)') {
             $systemNotificationEnabled = $Matches[1] -eq 'true'
         }
-        if ($frontmatter -match 'always_notify:\s*(true|false)') {
-            $alwaysNotify = $Matches[1] -eq 'true'
+        if ($frontmatter -match 'notify_always:\s*(true|false)') {
+            $notifyAlways = $Matches[1] -eq 'true'
         }
     }
 }
@@ -66,7 +66,7 @@ try {
     # 获取失败时 foregroundPid 保持 0，shouldNotify 由 alwaysNotify 决定
 }
 
-$shouldNotify = $alwaysNotify -or ($foregroundPid -ne $myTerminalPid)
+$shouldNotify = $notifyAlways -or ($foregroundPid -ne $myTerminalPid)
 
 if ($shouldNotify) {
     if ($Dir) {

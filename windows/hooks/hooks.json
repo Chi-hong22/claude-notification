@@ -17,7 +17,7 @@
           },
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.ps1\" -AudioFile \"${CLAUDE_PLUGIN_ROOT}/audio/warning.wav\"",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.ps1\" -AudioFile \"${CLAUDE_PLUGIN_ROOT}/audio/warning.wav\" -Dir \"${CLAUDE_PROJECT_DIR}\"",
             "timeout": 10
           }
         ]
@@ -38,7 +38,7 @@
           },
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.ps1\" -AudioFile \"${CLAUDE_PLUGIN_ROOT}/audio/complete.wav\"",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.ps1\" -AudioFile \"${CLAUDE_PLUGIN_ROOT}/audio/complete.wav\" -Dir \"${CLAUDE_PROJECT_DIR}\"",
             "timeout": 10
           }
         ]

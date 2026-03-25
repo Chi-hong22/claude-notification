@@ -7,6 +7,7 @@
 
 支持多种通知方式：
 - **系统通知** - Windows/macOS/Linux 原生桌面通知
+- **音频通知** - 任务完成/权限请求时播放提示音
 - **Bark 推送** - iOS 推送服务（可选）
 - **微信推送** - 通过 Server酱 推送到微信（可选）
 
@@ -111,7 +112,9 @@ wechat_token: "your-wechat-token"
 wechat_hook_enabled: true
 bark_hook_enabled: true
 system_notification_enabled: true
-always_notify: false
+notify_always: false
+audio_enabled: true
+audio_always: false
 ---
 ```
 
@@ -124,7 +127,9 @@ always_notify: false
 | `wechat_hook_enabled` | boolean | true | 是否启用微信 Hook 自动触发（需先配置 token） |
 | `bark_hook_enabled` | boolean | true | 是否启用 Bark Hook 自动触发（需先配置 url） |
 | `system_notification_enabled` | boolean | true | 是否启用系统通知 |
-| `always_notify` | boolean | false | 设为 true 则始终通知，即使终端在前台 |
+| `notify_always` | boolean | false | 设为 true 则始终发送系统通知，即使终端在前台 |
+| `audio_enabled` | boolean | true | 是否启用音频通知 |
+| `audio_always` | boolean | false | 设为 true 则始终播放音频，即使终端在前台 |
 
 ## 微信推送
 
@@ -321,6 +326,17 @@ MIT
 欢迎提交 Issue 和 Pull Request！
 
 ## 更新日志
+
+### v2.0.0 (2026-03-25) - 音频通知 & 配置升级
+
+> 从 v1.x 到 v2.0，新增音频通知渠道，完善四大通知渠道的独立配置流程，并规范化配置字段命名。
+
+- ✨ 新增音频通知支持，任务完成播放 complete.wav，权限请求播放 warning.wav
+- ✨ 新增 `audio_enabled`、`audio_always` 配置项，与系统通知逻辑对称
+- ✨ Skill 新增系统通知、音频通知独立配置节，四大渠道配置流程全覆盖
+- ✨ 新增配置文件版本检测与自动升级流程（字段补全 + 过时字段清理）
+- 🔧 `always_notify` 重命名为 `notify_always`，统一命名风格
+- 📝 更新文档与配置模板
 
 ### v1.2.x (2026-02-02) - 稳定性与体验优化
 
