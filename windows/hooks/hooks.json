@@ -14,6 +14,11 @@
             "type": "command",
             "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/wechat-hook.ps1\" -Title \"Claude Code\" -Message \"需要权限确认\"",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.ps1\" -AudioFile \"${CLAUDE_PLUGIN_ROOT}/audio/warning.wav\"",
+            "timeout": 10
           }
         ]
       }
@@ -29,6 +34,11 @@
           {
             "type": "command",
             "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/wechat-hook.ps1\" -Title \"Claude Code\" -Message \"任务已完成\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.ps1\" -AudioFile \"${CLAUDE_PLUGIN_ROOT}/audio/complete.wav\"",
             "timeout": 10
           }
         ]

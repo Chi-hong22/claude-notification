@@ -32,8 +32,8 @@ This plugin supports configuration and proactive notification sending.
 ---
 bark_url: ""
 wechat_token: ""
-wechat_hook_enabled: true
-bark_hook_enabled: true
+wechat_hook_enabled: false
+bark_hook_enabled: false
 system_notification_enabled: true
 always_notify: false
 ---
@@ -50,6 +50,9 @@ Scripts are located in `scripts/` directory of this skill:
 - **`scripts/notify.sh`** - System notification script
 - **`scripts/bark.sh`** - Bark push script with full parameters
 - **`scripts/wechat.sh`** - WeChat push script
+- **`scripts/play-audio.sh`** - Audio notification script (plays WAV files)
+- **`audio/warning.wav`** - Warning sound (played on PermissionRequest)
+- **`audio/complete.wav`** - Completion sound (played on Stop)
 
 ### System Notification
 
@@ -122,6 +125,18 @@ Use `scripts/wechat.sh` for WeChat notifications :
 | `-x, --text` | Notification title (required) |
 | `-d, --desp` | Notification content/description (optional) |
 
+### Audio Notification
+
+Plays a local WAV file. Used automatically by hooks. Supports `afplay` (macOS), `aplay` (Linux), `paplay` (PulseAudio):
+
+```bash
+# Play warning sound (PermissionRequest hook)
+bash "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.sh" "${CLAUDE_PLUGIN_ROOT}/audio/warning.wav"
+
+# Play completion sound (Stop hook)
+bash "${CLAUDE_PLUGIN_ROOT}/skills/notification-config/scripts/play-audio.sh" "${CLAUDE_PLUGIN_ROOT}/audio/complete.wav"
+```
+
 ## Recommended Usage Scenarios
 
 Send notifications proactively in these scenarios:
@@ -151,6 +166,8 @@ Send notifications proactively in these scenarios:
 
 3. **Create or update configuration file:**
    - Use Write tool to create/update `.claude/claude-notification.local.md`
+   - **IMPORTANT**: Set `bark_hook_enabled: true` only if the user provided a valid bark_url; otherwise set it to `false`
+   - **IMPORTANT**: Keep `wechat_hook_enabled` value unchanged if it already exists in the file; if creating new, set to `false` unless wechat_token is also being configured now
 
 4. **Check if CLAUDE.md needs notification configuration:**
    - Use Read tool to check if `.claude/CLAUDE.md` exists
@@ -223,6 +240,8 @@ bash "{{PLUGIN_PATH}}/skills/notification-config/scripts/bark.sh" -u "<user's ba
 
 3. **Create or update configuration file:**
    - Use Write tool to create/update `.claude/claude-notification.local.md`
+   - **IMPORTANT**: Set `wechat_hook_enabled: true` only if the user provided a valid wechat_token; otherwise set it to `false`
+   - **IMPORTANT**: Keep `bark_hook_enabled` value unchanged if it already exists in the file; if creating new, set to `false` unless bark_url is also being configured now
 
 4. **Check if CLAUDE.md needs notification configuration:**
    - Use Read tool to check if `.claude/CLAUDE.md` exists

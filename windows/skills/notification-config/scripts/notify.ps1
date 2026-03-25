@@ -30,64 +30,40 @@ if (Test-Path $configFile) {
     }
 }
 
-# 前台检测
-if (-not ([System.Management.Automation.PSTypeName]'Win32').Type) {
-    Add-Type @"
-using System;
-using System.Runtime.InteropServices;
-public class Win32 {
-    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
-    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
-}
-"@
-}
-
-$foregroundWindow = [Win32]::GetForegroundWindow()
-$foregroundPid = 0
-[Win32]::GetWindowThreadProcessId($foregroundWindow, [ref]$foregroundPid) | Out-Null
-
-$currentPid = $PID
+# 前台检测：用纯 .NET API，避免 Add-Type 编译 C# 和 WMI 查询
 $myTerminalPid = $null
 $terminalName = $null
 
-# 首先尝试从当前 PowerShell 会话获取窗口标题
+# 向上遍历父进程，找到有窗口的终端进程（最多 10 层）
 try {
-    $hostTitle = $Host.UI.RawUI.WindowTitle
-    if ($hostTitle) {
-        # 排除包含完整路径的默认标题（如 "Administrator: C:\Windows\System32\..."）
-        # 排除只包含进程名的标题（如 "Windows PowerShell"）
-        $isDefaultTitle = $hostTitle -match '(^Administrator:\s*[A-Z]:\\|^[A-Z]:\\|Windows PowerShell$|pwsh$|cmd$)'
-
-        if (-not $isDefaultTitle) {
-            # 使用用户自定义的标题
-            $terminalName = $hostTitle
+    $cur = [System.Diagnostics.Process]::GetCurrentProcess()
+    for ($i = 0; $i -lt 10; $i++) {
+        $parentId = (Get-CimInstance Win32_Process -Filter "ProcessId=$($cur.Id)" -Property ParentProcessId -ErrorAction SilentlyContinue).ParentProcessId
+        if (-not $parentId) { break }
+        $parent = Get-Process -Id $parentId -ErrorAction SilentlyContinue
+        if (-not $parent) { break }
+        if ($parent.MainWindowHandle -ne [IntPtr]::Zero -and $parent.ProcessName -ne 'explorer') {
+            $myTerminalPid = $parent.Id
+            $terminalName = if ($parent.MainWindowTitle) { $parent.MainWindowTitle } else { $parent.ProcessName }
+            break
         }
+        $cur = $parent
     }
 } catch {
-    # 忽略错误
+    # 忽略，不影响通知发送
 }
 
-# 如果没有获取到有效的标题，向上查找父进程
-if (-not $terminalName) {
-    for ($i = 0; $i -lt 20; $i++) {
-        $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$currentPid" -ErrorAction SilentlyContinue
-        if (-not $proc -or -not $proc.ParentProcessId) { break }
-        $parentProc = Get-Process -Id $proc.ParentProcessId -ErrorAction SilentlyContinue
-        if ($parentProc -and $parentProc.MainWindowHandle -ne [IntPtr]::Zero) {
-            $myTerminalPid = $parentProc.Id
-            # 获取终端名称（优先使用主窗口标题，否则使用进程名）
-            # 排除 explorer 进程
-            if ($parentProc.ProcessName -ne 'explorer') {
-                if ($parentProc.MainWindowTitle) {
-                    $terminalName = $parentProc.MainWindowTitle
-                } else {
-                    $terminalName = $parentProc.ProcessName
-                }
-                break
-            }
-        }
-        $currentPid = $proc.ParentProcessId
-    }
+# 获取前台窗口 PID（用 .NET + user32，仅在需要时加载）
+$foregroundPid = 0
+try {
+    Add-Type -MemberDefinition @'
+[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+'@ -Name 'User32Fg' -Namespace 'NativeMethods' -ErrorAction SilentlyContinue
+    $hwnd = [NativeMethods.User32Fg]::GetForegroundWindow()
+    [NativeMethods.User32Fg]::GetWindowThreadProcessId($hwnd, [ref]$foregroundPid) | Out-Null
+} catch {
+    # 获取失败时 foregroundPid 保持 0，shouldNotify 由 alwaysNotify 决定
 }
 
 $shouldNotify = $alwaysNotify -or ($foregroundPid -ne $myTerminalPid)
